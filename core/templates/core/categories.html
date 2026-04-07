@@ -1,0 +1,173 @@
+{% extends 'core/base.html' %}
+{% block title %}Categorias — Xpenses{% endblock %}
+{% block nav_categories %}active{% endblock %}
+{% block topbar_title %}categorias{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <div class="sub">minhas</div>
+    <h1>categorias</h1>
+  </div>
+</div>
+
+<!-- Custom Categories -->
+<div class="section-title">minhas categorias</div>
+<div class="cat-list">
+  {% for cat in custom_cats %}
+  <div class="cat-item">
+    <div class="cat-item-left">
+      <div class="cat-icon" style="background:{{ cat.color }}22;">
+        <i data-lucide="{{ cat.icon|default:'circle' }}" style="color:{{ cat.color }};"></i>
+      </div>
+      <span class="cat-name">{{ cat.name }}</span>
+    </div>
+    <form method="post" action="{% url 'category_delete' cat.pk %}"
+          onsubmit="return confirm('Deletar categoria {{ cat.name }}?')">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--despesa);">
+        <i data-lucide="trash-2" style="width:16px;height:16px;"></i>
+      </button>
+    </form>
+  </div>
+  {% empty %}
+  <div class="cat-item" style="color:var(--text-muted);font-size:13px;justify-content:center;">
+    nenhuma categoria customizada
+  </div>
+  {% endfor %}
+
+  <!-- Create button -->
+  <button class="cat-create-btn" id="open-cat-modal" style="display:flex;align-items:center;justify-content:center;gap:6px;">
+    <i data-lucide="plus" style="width:16px;height:16px;"></i> criar uma <strong>categoria</strong>
+  </button>
+</div>
+
+<!-- Default Categories -->
+<div class="section-title">categorias padrões</div>
+<div class="cat-list">
+  {% for cat in default_cats %}
+  <div class="cat-item">
+    <div class="cat-item-left">
+      <div class="cat-icon" style="background:{{ cat.color }}22;">
+        <i data-lucide="{{ cat.icon|default:'circle' }}" style="color:{{ cat.color }};"></i>
+      </div>
+      <span class="cat-name">{{ cat.name }}</span>
+    </div>
+    <span style="font-size:11px;color:var(--text-muted);">padrão</span>
+  </div>
+  {% empty %}
+  <div class="cat-item" style="color:var(--text-muted);">nenhuma</div>
+  {% endfor %}
+</div>
+
+<!-- ═══ Create Category Modal ═══ -->
+<div class="modal-overlay" id="cat-modal">
+  <div class="modal-sheet" style="max-width:520px;margin:0 auto;">
+    <div class="modal-handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div style="font-size:15px;font-weight:600;">nova categoria</div>
+      <button id="close-cat-modal" class="btn btn-ghost btn-sm">✕</button>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label">nome</label>
+        {{ form.name }}
+        {% if form.name.errors %}
+          <div style="color:var(--despesa);font-size:12px;margin-top:4px;">{{ form.name.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">ícone</label>
+        <div style="display:none;">{{ form.icon }}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">
+          Selecione um ícone abaixo:
+        </div>
+        <div id="icon-grid" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;max-height:140px;overflow-y:auto;">
+          <!-- Icons dynamically populated -->
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">cor</label>
+        {{ form.color }}
+      </div>
+
+      <!-- Preview -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:14px;background:var(--surface3);border-radius:var(--radius);">
+        <div id="preview-icon" class="cat-icon" style="background:#6F6F6F22;font-size:20px;display:flex;align-items:center;justify-content:center;">
+          <i data-lucide="circle" style="color:#6F6F6F;"></i>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;" id="preview-name">nova categoria</div>
+          <div style="font-size:11px;color:var(--text-muted);">pré-visualização</div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="display:flex;align-items:center;justify-content:center;gap:6px;">
+        <i data-lucide="save" style="width:16px;height:16px;"></i> criar categoria
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Live preview
+const nameInput  = document.querySelector('[name="name"]');
+const iconInput  = document.querySelector('[name="icon"]');
+const colorInput = document.querySelector('[name="color"]');
+const prevIcon   = document.getElementById('preview-icon');
+const prevName   = document.getElementById('preview-name');
+
+function updatePreview() {
+  if (prevIcon) {
+    prevIcon.innerHTML = `<i data-lucide="${iconInput?.value || 'circle'}" style="color:${colorInput?.value || '#6F6F6F'};"></i>`;
+    prevIcon.style.background = (colorInput?.value || '#6F6F6F') + '22';
+    lucide.createIcons();
+  }
+  if (prevName) prevName.textContent = nameInput?.value || 'nova categoria';
+}
+
+nameInput?.addEventListener('input', updatePreview);
+colorInput?.addEventListener('input', updatePreview);
+
+// Generate icons
+const iconGrid = document.getElementById('icon-grid');
+if (iconGrid) {
+  const iconList = [
+    'circle', 'home', 'shopping-cart', 'car', 'coffee', 'gift', 'heart', 'smartphone', 'zap', 'pizza', 
+    'plane', 'briefcase', 'book', 'monitor', 'headphones', 'music', 'camera', 'film', 'gamepad', 'pen-tool', 
+    'scissors', 'smile', 'frown', 'star', 'sun', 'moon', 'truck', 'tv', 'umbrella', 'watch', 'activity',
+    'anchor', 'archive', 'award', 'battery', 'bell', 'box', 'cloud', 'cpu', 'crosshair'
+  ];
+  iconList.forEach(ic => {
+    const btn = document.createElement('div');
+    btn.className = 'icon-picker-btn';
+    btn.style.cssText = 'width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:4px;cursor:pointer;border:1px solid var(--border);';
+    btn.innerHTML = `<i data-lucide="${ic}" style="width:18px;height:18px;"></i>`;
+    btn.onclick = () => { 
+      if (iconInput) iconInput.value = ic; 
+      // Update highlights
+      document.querySelectorAll('.icon-picker-btn').forEach(b => b.style.borderColor = 'var(--border)');
+      btn.style.borderColor = 'var(--accent)';
+      updatePreview(); 
+    };
+    iconGrid.appendChild(btn);
+  });
+  // Render icons freshly populated into the grid
+  lucide.createIcons();
+}
+
+// If form has errors, open modal automatically
+{% if form.errors %}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('cat-modal')?.classList.add('open');
+});
+{% endif %}
+</script>
+{% endblock %}

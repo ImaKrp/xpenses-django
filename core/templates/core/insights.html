@@ -1,0 +1,84 @@
+{% extends 'core/base.html' %}
+{% block title %}Insights — Xpenses AI{% endblock %}
+{% block nav_insights %}active{% endblock %}
+{% block topbar_title %}insights{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <div class="sub">inteligência financeira</div>
+    <h1>{{ month_name }} {{ year }}</h1>
+  </div>
+  <div class="month-nav">
+    <a href="?year={{ prev_year }}&month={{ prev_month }}">&#8249;</a>
+    <span class="month-label">{{ month_name }} {{ year }}</span>
+    <a href="?year={{ next_year }}&month={{ next_month }}">&#8250;</a>
+  </div>
+</div>
+
+<div class="section-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+  <i data-lucide="brain" style="color:var(--accent);"></i> avaliação 50/30/20
+</div>
+
+<!-- 50/30/20 Progress Bars -->
+<div class="cards-grid" style="margin-bottom:32px;">
+  <div class="stat-card" style="display:flex;flex-direction:column;align-items:flex-start;">
+    <div style="display:flex;justify-content:space-between;width:100%;margin-bottom:8px;">
+      <span style="font-weight:600;font-size:13px;">Essenciais</span>
+      <span style="color:var(--text-muted);font-size:12px;">Meta: 50%</span>
+    </div>
+    <div class="progress-track" style="margin:0;width:100%;">
+      <div class="progress-fill" style="width:{% if pct_necessities > 100 %}100{% else %}{{ pct_necessities|stringformat:"f" }}{% endif %}%;background:{% if pct_necessities > 50 %}var(--despesa){% else %}var(--receita){% endif %};"></div>
+    </div>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">{{ pct_necessities|floatformat:1 }}% consumidos (R$ {{ necessities|floatformat:2 }})</div>
+  </div>
+
+  <div class="stat-card" style="display:flex;flex-direction:column;align-items:flex-start;">
+    <div style="display:flex;justify-content:space-between;width:100%;margin-bottom:8px;">
+      <span style="font-weight:600;font-size:13px;">Livres</span>
+      <span style="color:var(--text-muted);font-size:12px;">Meta: 30%</span>
+    </div>
+    <div class="progress-track" style="margin:0;width:100%;">
+      <div class="progress-fill" style="width:{% if pct_wants > 100 %}100{% else %}{{ pct_wants|stringformat:"f" }}{% endif %}%;background:{% if pct_wants > 30 %}var(--despesa){% else %}var(--blue){% endif %};"></div>
+    </div>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">{{ pct_wants|floatformat:1 }}% consumidos (R$ {{ wants|floatformat:2 }})</div>
+  </div>
+
+  <div class="stat-card" style="display:flex;flex-direction:column;align-items:flex-start;">
+    <div style="display:flex;justify-content:space-between;width:100%;margin-bottom:8px;">
+      <span style="font-weight:600;font-size:13px;">Aportes / Reserva</span>
+      <span style="color:var(--text-muted);font-size:12px;">Meta: 20%</span>
+    </div>
+    <div class="progress-track" style="margin:0;width:100%;">
+      <div class="progress-fill" style="width:{% if pct_savings > 100 %}100{% elif pct_savings < 0 %}0{% else %}{{ pct_savings|stringformat:"f" }}{% endif %}%;background:{% if pct_savings < 20 %}var(--yellow){% else %}var(--accent){% endif %};"></div>
+    </div>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">{{ pct_savings|floatformat:1 }}% atingidos (R$ {{ savings|floatformat:2 }})</div>
+  </div>
+</div>
+
+<div class="section-title" style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+  <i data-lucide="lightbulb" style="color:var(--yellow);"></i> conselhos da ia
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;">
+  {% if tips %}
+    {% for tip in tips %}
+    <div style="background:var(--surface2);border-radius:var(--radius);padding:16px;display:flex;gap:16px;align-items:flex-start;border:1px solid #ffffff05;box-shadow:inset 0 1px 0 #ffffff0a;">
+      <div style="background:var(--surface3);padding:10px;border-radius:12px;color:{{ tip.color }};">
+        <i data-lucide="{{ tip.icon }}" style="width:24px;height:24px;"></i>
+      </div>
+      <div style="flex:1;">
+        <div style="font-weight:600;font-size:14px;margin-bottom:4px;color:{{ tip.color }};">{{ tip.title }}</div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.5;">{{ tip.text }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state">
+      <div class="emoji"><i data-lucide="coffee" style="width:48px;height:48px;color:var(--text-muted);"></i></div>
+      <p>Nenhum conselho disponível.<br>Adicione transações para ver as análises!</p>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

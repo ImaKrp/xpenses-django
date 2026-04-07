@@ -1,0 +1,281 @@
+{% extends 'core/base.html' %}
+{% block title %}{% if is_edit %}Editar{% else %}Nova{% endif %} Transação — Xpenses{% endblock %}
+{% block nav_list %}active{% endblock %}
+{% block topbar_title %}{% if is_edit %}editar lançamento{% else %}novo lançamento{% endif %}{% endblock %}
+
+{% block content %}
+<div style="max-width:600px;margin:0 auto;">
+
+  <!-- Coloured header -->
+  <div class="form-page-header despesa" id="form-header">
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">
+        {% if is_edit %}editar lançamento{% else %}novo lançamento{% endif %}
+      </div>
+      <!-- Value input -->
+      <div class="value-display">
+        <span class="currency">R$</span>
+        <input id="value-input" name="value_display"
+               value="{{ form.value.value|default:'0,00' }}"
+               inputmode="numeric" autocomplete="off"
+               style="max-width:220px;"
+               placeholder="0,00">
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px;">
+      <button type="button" id="toggle-type" class="type-toggle-btn despesa">
+        despesa
+      </button>
+      <button type="button" id="calculator-btn" class="btn btn-ghost btn-sm" style="display:flex;align-items:center;gap:4px;"><i data-lucide="calculator" style="width:14px;height:14px;"></i> calc</button>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="form-card">
+    <form method="post" id="main-form">
+      {% csrf_token %}
+      <!-- Hidden real value field -->
+      <input type="hidden" name="value" id="real-value"
+             value="{{ form.value.value|default:'' }}">
+
+      <!-- Type hidden (driven by toggle button) -->
+      <div style="display:none;">{{ form.type }}</div>
+
+      <div class="form-group">
+        <label class="form-label">título</label>
+        <input class="form-input" type="text" name="title"
+               value="{{ form.title.value|default:'' }}"
+               placeholder="ex: mercado, salário..."
+               required autofocus>
+        {% if form.title.errors %}
+          <div style="color:var(--despesa);font-size:12px;margin-top:4px;">
+            {{ form.title.errors.0 }}
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">data</label>
+        <input class="form-input" type="date" name="date"
+               value="{{ form.date.value|date:'Y-m-d'|default:'' }}" required>
+        {% if form.date.errors %}
+          <div style="color:var(--despesa);font-size:12px;margin-top:4px;">{{ form.date.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">categoria</label>
+        
+        <!-- HIDDEN INPUT -->
+        <input type="hidden" name="category" id="hidden-category" value="{{ form.category.value|default:'' }}">
+        
+        <!-- Custom Select UI -->
+        <div class="custom-select-wrapper" id="cat-select-wrapper" style="position: relative;">
+          <!-- Trigger -->
+          <div class="form-input custom-select-trigger" id="cat-select-trigger" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 10px 14px;">
+            <div id="cat-select-display" style="display: flex; align-items: center; gap: 8px;">
+               <span>Selecione uma categoria...</span>
+            </div>
+            <i data-lucide="chevron-down" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
+          </div>
+          
+          <!-- Dropdown Options -->
+          <div class="custom-select-options" id="cat-select-options" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); max-height: 220px; overflow-y: auto; z-index: 100; padding: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
+            
+            {% for cat in categories %}
+              {% if cat.name == 'outros' %}
+                <div class="custom-option" data-value="{{ cat.pk }}" data-name="{{ cat.name }}" data-icon="{{ cat.icon|default:'circle' }}" data-color="{{ cat.color|default:'#6F6F6F' }}" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; cursor: pointer; border-radius: 6px;">
+                  <div class="cat-icon" style="background: {{ cat.color }}22; width: 26px; height: 26px; min-width: 26px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                    <i data-lucide="{{ cat.icon|default:'circle' }}" style="color: {{ cat.color }}; width: 14px; height: 14px;"></i>
+                  </div>
+                  <span style="font-size: 14px; font-weight: 500;">{{ cat.name }}</span>
+                </div>
+                <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
+              {% endif %}
+            {% endfor %}
+
+            {% for cat in categories %}
+              {% if cat.name != 'outros' %}
+                <div class="custom-option" data-value="{{ cat.pk }}" data-name="{{ cat.name }}" data-icon="{{ cat.icon|default:'circle' }}" data-color="{{ cat.color|default:'#6F6F6F' }}" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; cursor: pointer; border-radius: 6px;">
+                  <div class="cat-icon" style="background: {{ cat.color }}22; width: 26px; height: 26px; min-width: 26px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                    <i data-lucide="{{ cat.icon|default:'circle' }}" style="color: {{ cat.color }}; width: 14px; height: 14px;"></i>
+                  </div>
+                  <span style="font-size: 14px; font-weight: 500;">{{ cat.name }}</span>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      {% if not is_edit %}
+      <div class="form-group">
+        <label class="form-label">lançamento</label>
+        <select class="form-input" name="frequency" id="id_frequency" required>
+          <option value="" disabled>selecionar...</option>
+          <option value="unique" {% if form.frequency.value == 'unique' %}selected{% endif %}>único</option>
+          <option value="recurrent" {% if form.frequency.value == 'recurrent' %}selected{% endif %}>recorrente</option>
+        </select>
+      </div>
+
+      <div id="recurrent-to-wrapper" style="display:none;" class="form-group">
+        <label class="form-label">recorrente até</label>
+        <input class="form-input" type="date" name="recurrent_to" id="recurrent_to">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">
+          Serão criadas entradas para cada mês até esta data.
+        </div>
+      </div>
+      {% else %}
+      <input type="hidden" name="frequency" value="{{ form.frequency.value }}">
+      {% endif %}
+
+      <button type="submit" class="btn btn-primary" id="submit-btn" style="display:flex;align-items:center;justify-content:center;gap:6px;">
+        <i data-lucide="save" style="width:16px;height:16px;"></i> salvar
+      </button>
+    </form>
+
+    {% if is_edit %}
+    <div style="margin-top:16px;">
+      <form method="post" action="{% url 'transaction_delete' transaction.pk %}"
+            onsubmit="return confirm('Deletar esta transação?')">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;">
+          <i data-lucide="trash-2" style="width:16px;height:16px;"></i> deletar transação
+        </button>
+      </form>
+    </div>
+    {% endif %}
+
+    <div style="margin-top:12px;">
+      <a href="javascript:history.back()" class="btn btn-ghost" style="width:100%;text-align:center;">
+        cancelar
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Calculator Modal ═══ -->
+<div class="modal-overlay" id="calculator-modal">
+  <div class="modal-sheet" style="max-width:340px;">
+    <div class="modal-handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px;"><i data-lucide="calculator" style="width:16px;height:16px;"></i> calculadora</div>
+      <button id="close-calc" class="btn btn-ghost btn-sm">✕</button>
+    </div>
+
+    <div class="calc-display">
+      <div class="calc-expression" id="calc-expression"></div>
+      <div class="calc-result" id="calc-result">0</div>
+    </div>
+
+    <div class="calc-grid">
+      <button class="calc-btn clear" data-calc="clear">C</button>
+      <button class="calc-btn op" data-calc="backspace">⌫</button>
+      <button class="calc-btn op" data-calc="%">%</button>
+      <button class="calc-btn op" data-calc="/">÷</button>
+
+      <button class="calc-btn" data-calc="7">7</button>
+      <button class="calc-btn" data-calc="8">8</button>
+      <button class="calc-btn" data-calc="9">9</button>
+      <button class="calc-btn op" data-calc="*">×</button>
+
+      <button class="calc-btn" data-calc="4">4</button>
+      <button class="calc-btn" data-calc="5">5</button>
+      <button class="calc-btn" data-calc="6">6</button>
+      <button class="calc-btn op" data-calc="-">−</button>
+
+      <button class="calc-btn" data-calc="1">1</button>
+      <button class="calc-btn" data-calc="2">2</button>
+      <button class="calc-btn" data-calc="3">3</button>
+      <button class="calc-btn op" data-calc="+">+</button>
+
+      <button class="calc-btn" data-calc="0">0</button>
+      <button class="calc-btn" data-calc=".">.</button>
+      <button class="calc-btn eq" data-calc="equals" style="grid-column:span 2;">=</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Sync display value → hidden real-value before submit
+document.getElementById('main-form')?.addEventListener('submit', function(e) {
+  const display = document.getElementById('value-input');
+  const real = document.getElementById('real-value');
+  if (display && real) {
+    // Pass exactly what's in display box; view will clean it
+    real.value = display.value;
+    // Also update the form's value field name
+    const valueField = document.querySelector('[name="value"]');
+    if (valueField && valueField !== real) valueField.value = display.value;
+  }
+});
+
+// Custom Styled Select para Categorias
+const catWrapper = document.getElementById('cat-select-wrapper');
+const catTrigger = document.getElementById('cat-select-trigger');
+const catOptions = document.getElementById('cat-select-options');
+const catDisplay = document.getElementById('cat-select-display');
+const hiddenCategory = document.getElementById('hidden-category');
+
+document.querySelectorAll('.custom-option').forEach(option => {
+  option.addEventListener('mouseenter', () => option.style.background = 'var(--surface3)');
+  option.addEventListener('mouseleave', () => option.style.background = 'transparent');
+
+  option.addEventListener('click', () => {
+    const value = option.getAttribute('data-value');
+    const name = option.getAttribute('data-name');
+    const icon = option.getAttribute('data-icon');
+    const color = option.getAttribute('data-color');
+    
+    // Atualizar valor escondido
+    if (hiddenCategory) hiddenCategory.value = value;
+    
+    // Atualizar Display
+    if (catDisplay) {
+      catDisplay.innerHTML = `
+        <div class="cat-icon" style="background: ${color}22; width: 24px; height: 24px; min-width: 24px; display: flex; align-items: center; justify-content: center; border-radius: 6px;">
+          <i data-lucide="${icon}" style="color: ${color}; width: 14px; height: 14px;"></i>
+        </div>
+        <span style="font-size: 14px; font-weight: 500;">${name}</span>
+      `;
+      lucide.createIcons();
+    }
+    
+    if (catOptions) catOptions.style.display = 'none';
+  });
+});
+
+if (catTrigger && catOptions) {
+  catTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    catOptions.style.display = catOptions.style.display === 'none' ? 'block' : 'none';
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!catWrapper.contains(e.target)) {
+      catOptions.style.display = 'none';
+    }
+  });
+}
+
+// Inicializar valor correto
+window.addEventListener('DOMContentLoaded', () => {
+  if (!hiddenCategory) return;
+  const initialValue = hiddenCategory.value;
+  let defaultOpt = null;
+
+  if (initialValue) {
+    defaultOpt = document.querySelector(`.custom-option[data-value="${initialValue}"]`);
+  }
+  if (!defaultOpt) {
+    defaultOpt = document.querySelector('.custom-option[data-name="outros"]');
+  }
+  
+  if (defaultOpt) {
+    defaultOpt.click();
+  }
+});
+</script>
+{% endblock %}

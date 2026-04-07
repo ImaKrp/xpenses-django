@@ -1,0 +1,147 @@
+{% extends 'core/base.html' %}
+{% block title %}Análise — Xpenses{% endblock %}
+{% block nav_analysis %}active{% endblock %}
+{% load static %}
+{% block topbar_title %}análise{% endblock %}
+
+{% block content %}
+<div class="analysis-header">
+  <div class="page-header-left">
+    <div class="sub">análise por categoria</div>
+    <h1>{{ month_name }} {{ year }}</h1>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <!-- Type toggle -->
+    <div style="display:flex;gap:8px;">
+      <a href="?year={{ year }}&month={{ month }}&type=receita"
+         class="btn btn-sm {% if type_q == 'receita' %}btn-primary{% else %}btn-ghost{% endif %}"
+         style="{% if type_q == 'receita' %}background:linear-gradient(135deg,var(--receita),#02a898);{% endif %}">
+        receitas
+      </a>
+      <a href="?year={{ year }}&month={{ month }}&type=despesa"
+         class="btn btn-sm {% if type_q == 'despesa' %}btn-primary{% else %}btn-ghost{% endif %}"
+         style="{% if type_q == 'despesa' %}background:linear-gradient(135deg,var(--despesa),#c22040);{% endif %}">
+        despesas
+      </a>
+    </div>
+    <!-- Month nav -->
+    <div class="month-nav">
+      <a href="?year={{ prev_year }}&month={{ prev_month }}&type={{ type_q }}">&#8249;</a>
+      <span class="month-label">{{ month_name }} {{ year }}</span>
+      <a href="?year={{ next_year }}&month={{ next_month }}&type={{ type_q }}">&#8250;</a>
+    </div>
+  </div>
+</div>
+
+{% if mapped %}
+<div class="analysis-grid">
+
+  <!-- Donut chart -->
+  <div class="chart-wrapper">
+    <div class="chart-canvas-wrapper">
+      <canvas id="analysis-chart" width="220" height="220"></canvas>
+      <div class="chart-center-label">
+        <div class="big">R$ {{ total_sum|floatformat:2 }}</div>
+        <div class="sub">total</div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend-list">
+      {% for item in mapped %}
+      {% if forloop.counter <= 5 %}
+      <div class="legend-item">
+        <div class="legend-dot" style="background:{{ item.color }};"></div>
+        <span class="legend-name">{{ item.name }}</span>
+        <span class="legend-pct">{{ item.percent|floatformat:1 }}%</span>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Category bars -->
+  <div>
+    <div class="section-title" style="margin-bottom:16px;">por categoria</div>
+    <div class="category-bars">
+      {% for item in mapped %}
+      <div class="cat-bar-item">
+        <div class="cat-bar-top">
+          <div class="cat-bar-left">
+            <div class="cat-bar-icon" style="background:{{ item.color }}22;">
+              <i data-lucide="{{ item.icon }}" style="color:{{ item.color }};"></i>
+            </div>
+            <div>
+              <div class="cat-bar-name">{{ item.name }}</div>
+              <div class="cat-bar-pct">{{ item.percent|floatformat:2 }}%</div>
+            </div>
+          </div>
+          <div class="cat-bar-val">R$ {{ item.value_float|floatformat:2 }}</div>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill"
+               style="width:{{ item.percent }}%;background:{{ item.color }};"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="emoji"><i data-lucide="frown" style="width:48px;height:48px;color:var(--text-muted);"></i></div>
+  <p>nenhuma transação de {{ type_q }} encontrada<br>no período</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const canvas = document.getElementById('analysis-chart');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  const chartData = {{ chart_data|safe }};
+  if (!chartData || chartData.length === 0) return;
+
+  const labels = chartData.map(d => d.label);
+  const values = chartData.map(d => d.value);
+  const colors = chartData.map(d => d.color);
+
+  new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors,
+        borderColor: '#191919',
+        borderWidth: 3,
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      cutout: '72%',
+      animation: { animateRotate: true, duration: 800 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const d = chartData[ctx.dataIndex];
+              return ` ${d.label}: ${d.percent}%`;
+            }
+          },
+          backgroundColor: '#191919',
+          borderColor: '#2a2a2a',
+          borderWidth: 1,
+          titleColor: '#fafafa',
+          bodyColor: '#9d9d9d',
+        }
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

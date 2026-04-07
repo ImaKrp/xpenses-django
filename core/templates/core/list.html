@@ -1,0 +1,245 @@
+{% extends 'core/base.html' %}
+{% block title %}Lançamentos — Xpenses{% endblock %}
+{% block nav_list %}active{% endblock %}
+{% block topbar_title %}lançamentos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <div class="sub">seus lançamentos</div>
+    <h1>mensais</h1>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <!-- Month nav -->
+    <div class="month-nav">
+      <a href="?year={{ prev_year }}&month={{ prev_month }}{% if filters.title %}&title={{ filters.title }}{% endif %}{% if filters.category_id %}&category_id={{ filters.category_id }}{% endif %}{% if filters.type %}&type={{ filters.type }}{% endif %}" title="anterior">&#8249;</a>
+      <span class="month-label">{{ month_name }} {{ year }}</span>
+      <a href="?year={{ next_year }}&month={{ next_month }}{% if filters.title %}&title={{ filters.title }}{% endif %}{% if filters.category_id %}&category_id={{ filters.category_id }}{% endif %}{% if filters.type %}&type={{ filters.type }}{% endif %}" title="próximo">&#8250;</a>
+    </div>
+    <button id="filter-toggle" class="btn btn-ghost btn-sm">
+      🔍 filtrar
+      {% if filters.title or filters.category_id or filters.type %}
+        <span class="filter-active-indicator"></span>
+      {% endif %}
+    </button>
+  </div>
+</div>
+
+<!-- Filter bar -->
+<form method="get" id="filter-bar" class="filter-bar"
+      style="display:{% if filters.title or filters.category_id or filters.type %}flex{% else %}none{% endif %};">
+  <input type="hidden" name="year" value="{{ year }}">
+  <input type="hidden" name="month" value="{{ month }}">
+
+  <input class="form-input" type="text" name="title"
+         value="{{ filters.title }}" placeholder="buscar por título...">
+
+  <!-- HIDDEN INPUT -->
+  <input type="hidden" name="category_id" id="hidden-category" value="{{ filters.category_id|default:'' }}">
+        
+  <!-- Custom Select UI -->
+  <div class="custom-select-wrapper" id="cat-select-wrapper" style="position: relative; flex: 1; min-width: 140px;">
+    <!-- Trigger -->
+    <div class="form-input custom-select-trigger" id="cat-select-trigger" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 10px 14px; background: var(--surface);">
+      <div id="cat-select-display" style="display: flex; align-items: center; gap: 8px;">
+         <span>todas as categorias</span>
+      </div>
+      <i data-lucide="chevron-down" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
+    </div>
+    
+    <!-- Dropdown Options -->
+    <div class="custom-select-options" id="cat-select-options" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); max-height: 220px; overflow-y: auto; z-index: 100; padding: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
+      
+      <div class="custom-option" data-value="" data-name="todas as categorias" data-icon="circle" data-color="#6F6F6F" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; cursor: pointer; border-radius: 6px;">
+        <div class="cat-icon" style="background: transparent; width: 26px; height: 26px; min-width: 26px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+          <i data-lucide="circle" style="color: var(--text-muted); width: 14px; height: 14px;"></i>
+        </div>
+        <span style="font-size: 14px; font-weight: 500;">todas as categorias</span>
+      </div>
+      <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
+
+      {% for cat in categories %}
+        {% if cat.name == 'outros' %}
+          <div class="custom-option" data-value="{{ cat.pk }}" data-name="{{ cat.name }}" data-icon="{{ cat.icon|default:'circle' }}" data-color="{{ cat.color|default:'#6F6F6F' }}" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; cursor: pointer; border-radius: 6px;">
+            <div class="cat-icon" style="background: {{ cat.color }}22; width: 26px; height: 26px; min-width: 26px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+              <i data-lucide="{{ cat.icon|default:'circle' }}" style="color: {{ cat.color }}; width: 14px; height: 14px;"></i>
+            </div>
+            <span style="font-size: 14px; font-weight: 500;">{{ cat.name }}</span>
+          </div>
+          <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
+        {% endif %}
+      {% endfor %}
+
+      {% for cat in categories %}
+        {% if cat.name != 'outros' %}
+          <div class="custom-option" data-value="{{ cat.pk }}" data-name="{{ cat.name }}" data-icon="{{ cat.icon|default:'circle' }}" data-color="{{ cat.color|default:'#6F6F6F' }}" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; cursor: pointer; border-radius: 6px;">
+            <div class="cat-icon" style="background: {{ cat.color }}22; width: 26px; height: 26px; min-width: 26px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+              <i data-lucide="{{ cat.icon|default:'circle' }}" style="color: {{ cat.color }}; width: 14px; height: 14px;"></i>
+            </div>
+            <span style="font-size: 14px; font-weight: 500;">{{ cat.name }}</span>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <select class="form-input" name="type" style="max-width:170px;">
+    <option value="">todos os tipos</option>
+    <option value="receita" {% if filters.type == 'receita' %}selected{% endif %}>receitas</option>
+    <option value="despesa" {% if filters.type == 'despesa' %}selected{% endif %}>despesas</option>
+  </select>
+
+  <button type="submit" class="btn btn-primary" style="width:auto;padding:10px 18px;margin:0;">
+    aplicar
+  </button>
+  <a href="?year={{ year }}&month={{ month }}" class="btn btn-ghost btn-sm">limpar</a>
+</form>
+
+<!-- Transaction groups -->
+{% if grouped %}
+  {% for date, txs in grouped.items %}
+  <div class="tx-group">
+    <div class="tx-group-header" style="display:flex;align-items:center;gap:6px;">
+      <i data-lucide="calendar" style="width:16px;height:16px;"></i> {{ date|date:"l, d \d\e F \d\e Y" }}
+    </div>
+    <div class="tx-list">
+      {% for tx in txs %}
+      <a href="{% url 'transaction_edit' tx.pk %}" class="tx-item">
+        <div class="tx-item-left">
+          <div class="tx-cat-icon"
+               style="background:{{ tx.category.color|default:'#6F6F6F' }}22;">
+            <i data-lucide="{{ tx.category.icon|default:'circle' }}" style="color:{{ tx.category.color|default:'#6F6F6F' }};"></i>
+          </div>
+          <div>
+            <div class="tx-title">{{ tx.title }}</div>
+            <div class="tx-sub">{{ tx.category.name|default:"outros" }}</div>
+          </div>
+        </div>
+        <div class="tx-item-right">
+          <div class="tx-value color-{{ tx.type }}">
+            R$ {{ tx.value|floatformat:2 }}
+          </div>
+          <div class="tx-freq">
+            {% if tx.frequency == 'unique' %}único{% else %}recorrente{% endif %}
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="empty-state">
+    <div class="emoji"><i data-lucide="frown" style="width:48px;height:48px;color:var(--text-muted);"></i></div>
+    <p>nenhuma transação encontrada<br>no período</p>
+  </div>
+{% endif %}
+
+{% endblock %}
+
+{% block footer %}
+<div class="summary-bar">
+  <div class="summary-item">
+    <div class="summary-label">receitas</div>
+    <div class="summary-val" style="color:var(--receita);">R$ {{ receita|floatformat:2 }}</div>
+  </div>
+  <div style="width:1px;height:32px;background:var(--border);"></div>
+  <div class="summary-item">
+    <div class="summary-label">despesas</div>
+    <div class="summary-val" style="color:var(--despesa);">R$ {{ despesa|floatformat:2 }}</div>
+  </div>
+  <div style="margin-left:auto;">
+    <div class="summary-label">saldo</div>
+    <div class="summary-val {% if receita < despesa %}color-despesa{% else %}color-receita{% endif %}">
+      R$ {{ receita|add:despesa|floatformat:2 }}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Filter toggle display trigger Fix
+const tglBtn = document.getElementById('filter-toggle');
+const fBar   = document.getElementById('filter-bar');
+if (tglBtn && fBar) {
+  tglBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (window.getComputedStyle(fBar).display === 'none') {
+      fBar.style.display = 'flex';
+    } else {
+      fBar.style.display = 'none';
+    }
+  });
+}
+
+// Custom Styled Select
+const catWrapper = document.getElementById('cat-select-wrapper');
+const catTrigger = document.getElementById('cat-select-trigger');
+const catOptions = document.getElementById('cat-select-options');
+const catDisplay = document.getElementById('cat-select-display');
+const hiddenCategory = document.getElementById('hidden-category');
+
+if (catWrapper) {
+  document.querySelectorAll('#cat-select-wrapper .custom-option').forEach(option => {
+    option.addEventListener('mouseenter', () => option.style.background = 'var(--surface3)');
+    option.addEventListener('mouseleave', () => option.style.background = 'transparent');
+  
+    option.addEventListener('click', () => {
+      const value = option.getAttribute('data-value');
+      const name = option.getAttribute('data-name');
+      const icon = option.getAttribute('data-icon');
+      const color = option.getAttribute('data-color');
+      
+      if (hiddenCategory) hiddenCategory.value = value;
+      
+      if (catDisplay) {
+        if (value === "") {
+          catDisplay.innerHTML = `<span>todas as categorias</span>`;
+        } else {
+          catDisplay.innerHTML = `
+            <div class="cat-icon" style="background: ${color}22; width: 24px; height: 24px; min-width: 24px; display: flex; align-items: center; justify-content: center; border-radius: 6px;">
+              <i data-lucide="${icon}" style="color: ${color}; width: 14px; height: 14px;"></i>
+            </div>
+            <span style="font-size: 14px; font-weight: 500;">${name}</span>
+          `;
+        }
+        lucide.createIcons();
+      }
+      
+      if (catOptions) catOptions.style.display = 'none';
+    });
+  });
+  
+  if (catTrigger && catOptions) {
+    catTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      catOptions.style.display = catOptions.style.display === 'none' ? 'block' : 'none';
+    });
+  
+    document.addEventListener('click', (e) => {
+      if (!catWrapper.contains(e.target)) {
+        catOptions.style.display = 'none';
+      }
+    });
+  }
+  
+  // Set correct initial value from filters
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!hiddenCategory) return;
+    const initialValue = hiddenCategory.value;
+    let defaultOpt = null;
+  
+    if (initialValue) {
+      defaultOpt = document.querySelector(`#cat-select-wrapper .custom-option[data-value="${initialValue}"]`);
+    } else {
+      defaultOpt = document.querySelector('#cat-select-wrapper .custom-option[data-value=""]');
+    }
+    
+    if (defaultOpt) {
+      defaultOpt.click();
+    }
+  });
+}
+</script>
+{% endblock %}

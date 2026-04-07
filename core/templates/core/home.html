@@ -1,0 +1,134 @@
+{% extends 'core/base.html' %}
+{% block title %}Início — Xpenses{% endblock %}
+{% block nav_home %}active{% endblock %}
+{% block topbar_title %}início{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <div class="sub">resumo</div>
+    <h1>{{ month_name }} {{ year }}</h1>
+  </div>
+  <!-- Month navigation -->
+  <div class="month-nav">
+    <a href="?year={{ prev_year }}&month={{ prev_month }}" title="mês anterior">&#8249;</a>
+    <span class="month-label">{{ month_name }} {{ year }}</span>
+    <a href="?year={{ next_year }}&month={{ next_month }}" title="próximo mês">&#8250;</a>
+  </div>
+</div>
+
+<!-- ── Balance card ── -->
+<div class="cards-grid" style="margin-bottom:24px;">
+  <div class="stat-card full-width" style="background:linear-gradient(135deg,#9474ee18,#9474ee08);border-color:#9474ee33;">
+    <div class="stat-icon" style="background:#1e1e1e; color: var(--accent);"><i data-lucide="piggy-bank"></i></div>
+    <div>
+      <div class="stat-label">saldo atual</div>
+      <div class="stat-value {% if balance < 0 %}negative{% endif %}">
+        R$ {{ balance|floatformat:2 }}
+      </div>
+    </div>
+    <div style="margin-left:auto;font-size:12px;color:var(--text-muted);display:flex;align-items:center;">
+      {% if balance >= 0 %}<i data-lucide="check-circle" style="width:14px;height:14px;color:var(--receita);"></i>{% else %}<i data-lucide="alert-triangle" style="width:14px;height:14px;color:var(--yellow);"></i>{% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ── Stats grid ── -->
+<div class="cards-grid" style="margin-bottom:32px;">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#03DAC618; color: var(--receita);"><i data-lucide="trending-up"></i></div>
+    <div>
+      <div class="stat-label">receitas</div>
+      <div class="stat-value" style="color:var(--receita);">R$ {{ receita|floatformat:2 }}</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#E5405E18; color: var(--despesa);"><i data-lucide="trending-down"></i></div>
+    <div>
+      <div class="stat-label">despesas</div>
+      <div class="stat-value" style="color:var(--despesa);">R$ {{ despesa|floatformat:2 }}</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#39ACE718; color: var(--blue);"><i data-lucide="arrow-up-right"></i></div>
+    <div>
+      <div class="stat-label">a receber</div>
+      <div class="stat-value" style="color:var(--blue);">R$ {{ a_receber|floatformat:2 }}</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background:#CFC46618; color: var(--yellow);"><i data-lucide="arrow-down-right"></i></div>
+    <div>
+      <div class="stat-label">a pagar</div>
+      <div class="stat-value" style="color:var(--yellow);">R$ {{ a_pagar|floatformat:2 }}</div>
+    </div>
+  </div>
+
+  <div class="stat-card full-width">
+    <div class="stat-icon" style="background:#cecece18; color: var(--text-muted);"><i data-lucide="scale"></i></div>
+    <div>
+      <div class="stat-label">projetado</div>
+      <div class="stat-value {% if projected < 0 %}negative{% endif %}">
+        R$ {{ projected|floatformat:2 }}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Recent transactions ── -->
+{% if recent %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+  <div class="section-title" style="margin:0;">últimos lançamentos</div>
+  <a href="{% url 'list' %}?year={{ year }}&month={{ month }}" style="font-size:12px;color:var(--accent);">ver todos →</a>
+</div>
+
+{% for date, txs in recent.items %}
+<div class="tx-group">
+  <div class="tx-group-header" style="display:flex;align-items:center;gap:6px;">
+    <i data-lucide="calendar" style="width:16px;height:16px;"></i> {{ date|date:"l, d \d\e F" }}
+  </div>
+  <div class="tx-list">
+    {% for tx in txs %}
+    <a href="{% url 'transaction_edit' tx.pk %}" class="tx-item">
+      <div class="tx-item-left">
+        <div class="tx-cat-icon"
+             style="background:{{ tx.category.color|default:'#6F6F6F' }}22;">
+          <i data-lucide="{{ tx.category.icon|default:'circle' }}" style="color:{{ tx.category.color|default:'#6F6F6F' }};"></i>
+        </div>
+        <div>
+          <div class="tx-title">{{ tx.title }}</div>
+          <div class="tx-sub">{{ tx.category.name|default:"outros" }}</div>
+        </div>
+      </div>
+      <div class="tx-item-right">
+        <div class="tx-value color-{{ tx.type }}">
+          R$ {{ tx.value|floatformat:2 }}
+        </div>
+        <div class="tx-freq">
+          {% if tx.frequency == 'unique' %}único{% else %}recorrente{% endif %}
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+
+<div style="text-align:center;padding:8px 0 16px;">
+  <a href="{% url 'list' %}?year={{ year }}&month={{ month }}"
+     style="font-size:13px;color:var(--text-muted);">⋯ ver mais</a>
+</div>
+
+{% else %}
+<div class="empty-state">
+  <div class="emoji"><i data-lucide="frown" style="width:48px;height:48px;color:var(--text-muted);"></i></div>
+  <p>nenhuma transação encontrada<br>no período</p>
+  <a href="{% url 'transaction_new' %}" class="btn btn-primary" style="width:auto;margin-top:20px;padding:10px 24px;">
+    + adicionar transação
+  </a>
+</div>
+{% endif %}
+{% endblock %}

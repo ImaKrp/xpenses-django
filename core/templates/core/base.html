@@ -1,0 +1,103 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Xpenses{% endblock %}</title>
+  <meta name="description" content="Controle suas finanças com simplicidade e clareza.">
+  <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body>
+
+<!-- Sidebar overlay (mobile) -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><i data-lucide="circle-dollar-sign"></i></div>
+    <span class="logo-title">x<span>penses</span></span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a href="{% url 'home' %}" class="nav-item {% block nav_home %}{% endblock %}">
+      <span class="nav-icon"><i data-lucide="home" stroke-width="2.5"></i></span>
+      <span class="nav-label">início</span>
+    </a>
+    <a href="{% url 'list' %}" class="nav-item {% block nav_list %}{% endblock %}">
+      <span class="nav-icon"><i data-lucide="clipboard-list" stroke-width="2.5"></i></span>
+      <span class="nav-label">lançamentos</span>
+    </a>
+    <a href="{% url 'analysis' %}" class="nav-item {% block nav_analysis %}{% endblock %}">
+      <span class="nav-icon"><i data-lucide="pie-chart" stroke-width="2.5"></i></span>
+      <span class="nav-label">análise</span>
+    </a>
+    <a href="{% url 'insights' %}" class="nav-item {% block nav_insights %}{% endblock %}">
+      <span class="nav-icon"><i data-lucide="lightbulb" stroke-width="2.5"></i></span>
+      <span class="nav-label">insights</span>
+    </a>
+    <a href="{% url 'categories' %}" class="nav-item {% block nav_categories %}{% endblock %}">
+      <span class="nav-icon"><i data-lucide="tags" stroke-width="2.5"></i></span>
+      <span class="nav-label">categorias</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-profile">
+    <a href="{% url 'profile' %}" class="profile-link">
+      <div class="profile-avatar">
+        {% if user_profile and user_profile.image %}
+          <img src="{{ user_profile.image.url }}" alt="avatar">
+        {% elif user_profile and user_profile.name %}
+          {{ user_profile.name|first|upper }}
+        {% else %}
+          <i data-lucide="user"></i>
+        {% endif %}
+      </div>
+      <div>
+        <div class="profile-name">{{ user_profile.name|default:"Usuário" }}</div>
+        <div class="profile-sub">ver perfil</div>
+      </div>
+    </a>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main-content">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <button class="hamburger" id="hamburger">☰</button>
+    <span class="topbar-title">{% block topbar_title %}xpenses{% endblock %}</span>
+    <a href="{% url 'transaction_new' %}" class="btn btn-primary" style="width:auto;padding:8px 16px;font-size:13px;">
+      + novo lançamento
+    </a>
+  </header>
+
+  <!-- Messages / Toasts -->
+  {% if messages %}
+  <div class="messages-list">
+    {% for message in messages %}
+    <div class="message-toast {{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Page content -->
+  <main class="page-body">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block footer %}{% endblock %}
+</div>
+
+<script src="{% static 'core/js/app.js' %}"></script>
+<script>
+  lucide.createIcons();
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

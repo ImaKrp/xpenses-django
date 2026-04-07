@@ -1,0 +1,82 @@
+{% extends 'core/base.html' %}
+{% block title %}Perfil — Xpenses{% endblock %}
+{% block topbar_title %}perfil{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+
+  <form method="post" enctype="multipart/form-data" id="profile-form">
+    {% csrf_token %}
+
+    <!-- Avatar -->
+    <div style="text-align:center;margin-bottom:24px;">
+      <label for="{{ form.image.id_for_label }}" style="cursor:pointer;">
+        <div class="profile-avatar-big">
+          {% if user and user.image %}
+            <img src="{{ user.image.url }}" alt="foto de perfil">
+          {% elif user and user.name %}
+            <span>{{ user.name|first|upper }}</span>
+          {% else %}
+            <span><i data-lucide="user" style="width:48px;height:48px;color:var(--text-muted);"></i></span>
+          {% endif %}
+          <div class="profile-avatar-overlay"><i data-lucide="camera" style="width:20px;height:20px;"></i></div>
+        </div>
+      </label>
+      {{ form.image }}
+      <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">
+        clique para alterar a foto
+      </p>
+    </div>
+
+    <!-- Greeting -->
+    <div style="text-align:center;font-size:18px;margin-bottom:28px;font-weight:500;">
+      Olá, <strong style="color:var(--accent);">{{ user.name|default:"Usuário" }}</strong>!
+    </div>
+
+    <!-- Name -->
+    <div class="form-group">
+      <label class="form-label" for="{{ form.name.id_for_label }}">nome</label>
+      {{ form.name }}
+    </div>
+
+    {% if form.errors %}
+    <div style="color:var(--despesa);font-size:13px;margin-bottom:12px;">
+      Erro: verifique os campos acima.
+    </div>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary" id="save-btn" style="display:flex;align-items:center;justify-content:center;gap:6px;">
+      <i data-lucide="save" style="width:16px;height:16px;"></i> salvar perfil
+    </button>
+
+    <a href="{% url 'home' %}" class="btn btn-ghost" style="width:100%;text-align:center;margin-top:10px;">
+      cancelar
+    </a>
+  </form>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Hide the image input and show it only when avatar is clicked
+const imgInput = document.getElementById('{{ form.image.id_for_label }}');
+if (imgInput) {
+  imgInput.style.display = 'none';
+  imgInput.addEventListener('change', () => {
+    const file = imgInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const avatar = document.querySelector('.profile-avatar-big');
+      if (avatar) {
+        avatar.innerHTML = `<img src="${e.target.result}" alt="preview" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">
+                            <div class="profile-avatar-overlay"><i data-lucide="camera" style="width:20px;height:20px;"></i></div>`;
+        lucide.createIcons();
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+</script>
+{% endblock %}
