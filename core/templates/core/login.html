@@ -1,0 +1,98 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrar — Xpenses</title>
+  <meta name="description" content="Faça login na sua conta Xpenses para controlar suas finanças.">
+  <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body class="auth-body">
+
+<div class="auth-container">
+  <div class="auth-bg-glow auth-bg-glow--1"></div>
+  <div class="auth-bg-glow auth-bg-glow--2"></div>
+
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">
+        <i data-lucide="circle-dollar-sign"></i>
+      </div>
+      <span class="auth-logo-title">x<span>penses</span></span>
+    </div>
+
+    <h1 class="auth-heading">Bem-vindo de volta</h1>
+    <p class="auth-subheading">Entre na sua conta para continuar</p>
+
+    {% if form.non_field_errors %}
+    <div class="auth-alert auth-alert--error">
+      <i data-lucide="alert-circle" style="width:16px;height:16px;flex-shrink:0;"></i>
+      <span>
+        {% for error in form.non_field_errors %}
+          {{ error }}
+        {% endfor %}
+      </span>
+    </div>
+    {% endif %}
+
+    <form method="post" class="auth-form" id="login-form">
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label" for="id_username">
+          <i data-lucide="user" style="width:13px;height:13px;"></i> usuário
+        </label>
+        {{ form.username }}
+        {% if form.username.errors %}
+          <div class="auth-field-error">{{ form.username.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="id_password">
+          <i data-lucide="lock" style="width:13px;height:13px;"></i> senha
+        </label>
+        <div class="auth-password-wrapper">
+          {{ form.password }}
+          <button type="button" class="auth-toggle-pw" id="toggle-pw" aria-label="Mostrar senha">
+            <i data-lucide="eye" id="pw-icon" style="width:18px;height:18px;"></i>
+          </button>
+        </div>
+        {% if form.password.errors %}
+          <div class="auth-field-error">{{ form.password.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="btn btn-primary auth-submit" id="login-btn">
+        <i data-lucide="log-in" style="width:18px;height:18px;"></i>
+        entrar
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <span>Não tem uma conta?</span>
+      <a href="{% url 'signup' %}" class="auth-link">Cadastre-se</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  lucide.createIcons();
+
+  const toggle = document.getElementById('toggle-pw');
+  const pwInput = document.getElementById('id_password');
+  const icon = document.getElementById('pw-icon');
+  if (toggle && pwInput) {
+    toggle.addEventListener('click', () => {
+      const isPassword = pwInput.type === 'password';
+      pwInput.type = isPassword ? 'text' : 'password';
+      icon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
+      lucide.createIcons();
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Página não encontrada — Xpenses</title>
+  <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+</head>
+<body class="auth-body">
+<div class="auth-container">
+  <div class="auth-bg-glow auth-bg-glow--1"></div>
+  <div class="auth-bg-glow auth-bg-glow--2"></div>
+
+  <div class="auth-card" style="text-align:center;">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">
+        <i data-lucide="compass"></i>
+      </div>
+      <span class="auth-logo-title">x<span>penses</span></span>
+    </div>
+
+    <h1 class="auth-heading">404</h1>
+    <p class="auth-subheading">A página que você procura não existe ou foi movida.</p>
+
+    <a href="{% url 'home' %}" class="btn btn-primary auth-submit">
+      <i data-lucide="home" style="width:18px;height:18px;"></i>
+      voltar ao início
+    </a>
+  </div>
+</div>
+
+<script>
+  lucide.createIcons();
+</script>
+</body>
+</html>
